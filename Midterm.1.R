@@ -1,4 +1,4 @@
-#MIDTERM 1
+#MIDTERM 1--------
 
 #The given data set is psychiatric symptoms, secondary to an acute spinal injury
 #and associated to age. The columns are: Record ID- the unique identifier, Age 
@@ -12,11 +12,30 @@
   #ands connected it to my online repo. Just to check the directory, I ran:
 getwd() #which returns my repo directory
 
-#libraries. For convenience, I'll add all libraries here:
+#libraries------- 
+  #For convenience, I'll add all libraries here:
 
 library(readxl)
+library(tidyverse)
 
-#read in data. First, I copied and pasted the data set into an excel file before
-#upload. I also will store this in github.
+#read in data------- 
+  #First, I copied and pasted the data set into an excel file before
+  #upload. I also will store this in github.
 
 BSI.sig.data <- read_xlsx("midterm.dataset.xlsx")
+
+#Check data types.-------
+  #First, I want to see if my data is stored as the type of data I want:
+  #numeric, character, etc.
+names(BSI.sig.data)
+  #After a quick check, I found that all my columns were pulled with a weird
+  #naming format; they all had a space after them, giving them the weird naming
+  #convention you see below. I renamed them all.
+BSI.sig.data <- BSI.sig.data %>% rename(Age.Group=`Age.Group `, 
+    Record = ` Record `, Sig.Scale=`Sig.Scale `, BSI.Total=`BSI.Total `) 
+
+typeof(BSI.sig.data$Record) ; typeof(BSI.sig.data$Age.Group)
+typeof(BSI.sig.data$BSI.Total) ; typeof(BSI.sig.data$Sig.Scale)
+  #After checking all data types, I see they are all stored as character. I will
+  #change BSI.Total and Sig.Scale to numeric and Age.Group to a factor.
+
