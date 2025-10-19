@@ -36,6 +36,7 @@ BSI.sig.data <- BSI.sig.data %>% rename(Age.Group=`Age.Group `,
 
 typeof(BSI.sig.data$Record) ; typeof(BSI.sig.data$Age.Group)
 typeof(BSI.sig.data$BSI.Total) ; typeof(BSI.sig.data$Sig.Scale)
-  #After checking all data types, I see they are all stored as character. I will
-  #change BSI.Total and Sig.Scale to numeric and Age.Group to a factor.
+  #After checking all data types, I see that ID and Age are stored as "double". I will
+  #change Record and Age to character.
 
+BSI.sig.data <- BSI.sig.data %>% mutate_at(c("Record", "Age.Group"), as.character)
