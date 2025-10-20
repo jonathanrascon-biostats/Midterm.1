@@ -45,10 +45,33 @@ BSI.sig.data <- BSI.sig.data %>% mutate_at(c("Record", "Age.Group"), as.characte
 
 #using the mutate_at function with concatenate, I change both to character strings.
 
+#Pull statistical descriptions-------
+  #Using the by function, I can stratify each variable by age group
+by(data = BSI.sig.data$BSI.Total, BSI.sig.data$Age.Group,
+   FUN = function(x) round(stat.desc(x, norm = TRUE), 3))
+
+by(data = BSI.sig.data$Sig.Scale, BSI.sig.data$Age.Group,
+   FUN = function(x) round(stat.desc(x, norm = TRUE), 3))
+  #The first thing to notice is the extreme difference in mean! The BSI total 
+  #and the Sig score are both much higher for the 18-35 group.
+
+#Plot BSI mean data-------
+
+BSI.plot <- BSI.sig.data %>% 
+  ggplot(aes(x = Age.Group, y = BSI.Total, fill = Age.Group)) + 
+  stat_summary(fun = mean, geom = "bar", width = .7) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, color = "red")+
+  scale_y_continuous(limits = c(0, 140), breaks = seq(from = 0, to = 140, by = 5))+
+  scale_fill_manual(values = c("forestgreen", "blue")) +
+  labs(title = "BSI Scores by Age Group", x = "Age Group" , y = "Mean Score by Age") + 
+  theme(legend.position = "none")
+
+BSI.plot  
+
 #Melt data into long(tidy) format
 BSI.sig.data.long <- melt(BSI.sig.data, id.vars = c("Record", "Age.Group"), 
           variable.name = "Test.Type", value.name = "Score")  
 
 BSI.sig.data.long %>% group_by(Age.Group, Test.Type) %>% 
-  summarise(mean = mean(Score), sd(Score))
+  summarise(mean = mean(Score), sd(Score), var(Score))
 
