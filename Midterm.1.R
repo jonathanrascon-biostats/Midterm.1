@@ -17,6 +17,8 @@ getwd() #which returns my repo directory
 
 library(readxl)
 library(tidyverse)
+library(pastecs)
+library(reshape2)
 
 #read in data------- 
   #First, I copied and pasted the data set into an excel file before
@@ -40,3 +42,13 @@ typeof(BSI.sig.data$BSI.Total) ; typeof(BSI.sig.data$Sig.Scale)
   #change Record and Age to character.
 
 BSI.sig.data <- BSI.sig.data %>% mutate_at(c("Record", "Age.Group"), as.character)
+
+#using the mutate_at function with concatenate, I change both to character strings.
+
+#Melt data into long(tidy) format
+BSI.sig.data.long <- melt(BSI.sig.data, id.vars = c("Record", "Age.Group"), 
+          variable.name = "Test.Type", value.name = "Score")  
+
+BSI.sig.data.long %>% group_by(Age.Group, Test.Type) %>% 
+  summarise(mean = mean(Score), sd(Score))
+
