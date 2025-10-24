@@ -21,3 +21,15 @@ BSI.plot <- BSI.sig.data %>%
 
 BSI.plot                                          
   
+
+
+Sig.Scale.plot <- BSI.sig.data %>% 
+  ggplot(aes(x = Age.Group, y = Sig.Scale, fill = Age.Group)) +
+  stat_summary(fun = mean, geom = "bar", width = .7) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, color = "tomato")+
+  scale_y_continuous(limits = c(-1, 10), breaks = seq(from = 0, to = 10, by = 1))+
+  scale_fill_manual(values = c("skyblue", "green")) +
+  labs(title = "SIG Scores by Age Group", x = "Age Group" , y = "Mean Score by Age") + 
+  theme(legend.position = "none")
+
+Sig.Scale.plot
