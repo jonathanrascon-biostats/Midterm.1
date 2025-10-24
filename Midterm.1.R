@@ -25,6 +25,7 @@ library(readxl)
 library(tidyverse)
 library(pastecs)
 library(reshape2)
+library(car)
 
 #read in data------- 
   #First, I copied and pasted the data set into an excel file before
@@ -167,7 +168,9 @@ data.histogram <- BSI.sig.data.long %>% ggplot(aes(Score)) +
 
 data.histogram
 
-#
+#I think these graphs do a good job displaying the "normality" of the data, with
+#the exception of the Sig.Scale for 18-35 age group. One question I have for these
+#graphs is how to choose the appropriate number of bins.
 
 #levene test, or other variance test?
 
@@ -179,11 +182,44 @@ BSI.sig.data.wide <- data.frame(cbind(Record[1:10], Record[11:20], BSI.Total[1:1
 detach(BSI.sig.data)
 summary(BSI.sig.data.wide)
 BSI.sig.data.wide <- BSI.sig.data.wide %>% rename("ID 18-35" = X1, "ID 65-80" = X2,
-            "BSI 18-35" = X3, "BSI 65-80" = X4, "Sig Scale 18-35" = X5, 
-            "Sig Scale 65-80" = X6) %>% mutate_at(c("BSI 18-35", "BSI 65-80",
-                        "Sig Scale 18-35", "Sig Scale 65-80"), as.numeric) %>% 
-                mutate(BSI.diff = `BSI 18-35`- `BSI 65-80`,
-                            SIG.diff = `Sig Scale 18-35` - `Sig Scale 65-80`)
+      "BSI 18-35" = X3, "BSI 65-80" = X4, "Sig Scale 18-35" = X5, 
+      "Sig Scale 65-80" = X6) %>% mutate_at(c("BSI 18-35", "BSI 65-80",
+            "Sig Scale 18-35", "Sig Scale 65-80"), as.numeric) %>% 
+            mutate(BSI.diff = `BSI 18-35`- `BSI 65-80`,
+             SIG.diff = `Sig Scale 18-35` - `Sig Scale 65-80`)
+
+#Run shapiro-Wilks test to test for normailty---------
+#NULL hypothesis for BSI.diff: data is distributed normally; ALT. hypothesis:
+#data is not distributed normally.
+shapiro.test(BSI.sig.data.wide$BSI.diff)
+shapiro.test(BSI.sig.data.wide$SIG.diff)
+
+#For both test, we "fail to reject the null", that is to say, we conclude that 
+#the data is likely normal with p-values > alpha=.05. I suspected this going in
+#because the data sets we combined by subtraction were normally distributed.
+
+#NULL hypothesis: underlying population variances of the two groups are equal; 
+#ALT. hypothesis: underlying populaion variances are different.
+leveneTest(BSI.sig.data.wide$`BSI 18-35`,BSI.sig.data.wide$`ID 65-80`)
+leveneTest(BSI.sig.data.wide$`BSI 18-35`,BSI.sig.data.wide$`BSI 65-80`, center = mean)
+
+leveneTest(BSI.sig.data.wide$`Sig Scale 18-35`, BSI.sig.data.wide$`Sig Scale 65-80`)
+leveneTest(BSI.sig.data.wide$`Sig Scale 18-35`, BSI.sig.data.wide$`Sig Scale 65-80`, center = mean)
+
+#for both tests, the p-value falls in the rejection region, therefore we reject 
+#the null and conclude that for both Sig.Scale and BSI.Total, the variances between
+#age groups are different. I ran the test for each test type between groups twice,
+#once using the default median as the center for "robustness" and again with the 
+#center as the mean because the data was tested to be normal. The results were the 
+#same, suggesting that the mean and median are very close together.
+
+#Run t-tests to compare by age group each test type---------
+  #Because each test groups tests as normal, they are presumed to be independent,
+  #and that the variances are different, we'll run each test with paired set to
+  #false and var.equal also set to false
+
+t.test()
+
 
 diff.plot <- BSI.sig.data.wide %>% select(BSI.diff, SIG.diff) %>% 
   melt(variable.name = "Test.Type", value.name = "Score") %>% ggplot(aes(Score)) +
