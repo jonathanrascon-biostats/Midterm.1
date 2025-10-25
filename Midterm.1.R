@@ -281,6 +281,9 @@ detach(BSI.sig.data.wide)
 #age groups are different, and that the confidence interval tell how much larger
 #the means of the 18-35 group are compared to the 65-80 group. <f> COMPLETED.
 
+#This result is well reflected in the bar graphs shown above, given that the means 
+#for both graphs appear so far apart, and that the confidence intervals do not overlap.
+
 #<g>Retest by age group with the new assumption that the data is paired--------
 # i.e.each person was followed over a long period of time and we tested them at 
 #different timepoints: ONLY FOR THE BSI data!!
@@ -308,4 +311,6 @@ attach(paired.data.wide)
 t.test(`BSI 18-35`, `BSI 65-80`, paired = TRUE, var.equal = TRUE)
 
 #We fail to reject the null, and conclude that the mean difference is not equal to
-#zero. <g> COMPLETED.
+#zero. <g> COMPLETED. write a more complete summary.
+
+detach(paired.data.wide)
