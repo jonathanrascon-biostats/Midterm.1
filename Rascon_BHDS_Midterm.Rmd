@@ -1,3 +1,12 @@
+---
+title: "BDHS2010_Midterm"
+author: "Jonathan Rascon"
+date: "2025-10-25"
+output: pdf_document
+---
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
 #MIDTERM 1--------
   #Notes on logistics: Each task assigned in the midterm document (a thru g)
   #is denoted by <a>, <b>, <c>, etc. and once that task is completed, I denote that
@@ -374,3 +383,8 @@ cor(BSI.sig.data$BSI.Total, BSI.sig.data$Sig.Scale)
   #over time, a person's score on the BSI scale decreases, or that the number of 
   #psychiatric symptoms a person suffers decreases as the time since the acute 
   #spinal injury is greater.
+
+
+
+
+```
