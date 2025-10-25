@@ -26,14 +26,15 @@ library(tidyverse)
 library(pastecs)
 library(reshape2)
 library(car)
+library(formatR)
 
-#read in data------- 
+#<a>Correctly create a data frame------- 
   #First, I copied and pasted the data set into an excel file before
   #upload. I also will store this in github.
 
 BSI.sig.data <- read_xlsx("midterm.dataset.xlsx")
 
-#Check data types.-------
+#Check data types
 
 names(BSI.sig.data)
   #After a quick check, I found that all my columns were pulled with a weird
@@ -47,13 +48,15 @@ BSI.sig.data <- BSI.sig.data %>% rename(Age.Group=`Age.Group `,
 typeof(BSI.sig.data$Record) ; typeof(BSI.sig.data$Age.Group)
 typeof(BSI.sig.data$BSI.Total) ; typeof(BSI.sig.data$Sig.Scale)
   #After checking all data types, I see that ID and Age are stored as "double". I will
-  #change Record and Age to character.
+  #change Record and Age to character and Age as a factor.
 
 BSI.sig.data <- BSI.sig.data %>% mutate_at(c("Record", "Age.Group"), as.character)
+BSI.sig.data <- BSI.sig.data %>% mutate_at("Age.Group", factor)
 
-#using the mutate_at function with concatenate, I change both to character strings.
+#using the mutate_at function with concatenate, I change both to character strings
+#and the age group to a factor. <a> COMPLETED.
 
-#Pull statistical descriptions-------
+#<b>Calculate the mean, variance and standard deviation for each age group-------
   #Using the by function, I can stratify each variable by age group. I also used
   #the round function to make the data a little more readable, and included the 
   #NORM argument to get a sense of the shape of the distribution.
@@ -81,12 +84,12 @@ by(data = BSI.sig.data$Sig.Scale, BSI.sig.data$Age.Group,
   #much higher than in 65-80. The coeifficient of variation is higher in 65-80
   #suggesting that the data points are more spread out in this group. Both groups show a high
   #probability for normality and shape. And, the confidence intervals do not
-  #overlap. 
+  #overlap.
 
 #Therefore, for both dependent variables, I suspect that there is a significant
-  #difference between groups.
+  #difference between groups.  <b> COMPLETED.
 
-#Plot BSI mean data-------
+#<c>Create bar charts displaying difference in means for BSI Total-------
   #(1)assign an object, (2) pipe the data into ggplot, (3)assign aesthetics,
   #(4)use stat_summary to create bars set to the means, (5)create errorbar geom
   #using mean_cl_normal to create 95% confidence interval based on the normal
@@ -113,9 +116,9 @@ BSI.plot
   #confidence intervals do not overlap, supporting the idea that the underlying means
   #of these two groups are different. With the addition of geom_jitter we can even
   #see that the range of the spread of data points are similar between groups,
-  #which reflects similarity of coefficients of variation.
+  #which reflects similarity of coefficients of variation. <c> COMPLETED
 
-#Plot Sig.Scale mean data-------
+#<d>Create bar charts displaying difference in means for Sig Scale-------
 
 Sig.Scale.plot <- BSI.sig.data %>% 
   ggplot(aes(x = Age.Group, y = Sig.Scale, fill = Age.Group)) +
@@ -135,6 +138,7 @@ Sig.Scale.plot
   #it is fairly clear from the graph that the underlying means of the two groups
   #differ significantly. Also, from the geom_jitter overlay, we can see that the 
   #variation in the 65-80 group is much larger.
+  #<d> COMPLETED.
 
 #Melt data into long(tidy) format---------
   #The goal here is to create a faceted set of histograms to display the normality
@@ -156,7 +160,7 @@ BSI.sig.data.long <- melt(BSI.sig.data, id.vars = c("Record", "Age.Group"),
   #and facet them into the appropriate groups with facet_wrap. Thus, I use faceting
   #to create hiastograms by test type and age group. I use the scales = "free_x"
   #argument in facet_wrap because the two test types have a different scoring system.
-  #This tells r to assign x valuees appropriate to the specific data. I don't use
+  #This tells r to assign x valuees appropriate to the specific data. I did't use
   #the "free" argument because I want to keep my counts along the y-axis consistent.
 
 data.histogram <- BSI.sig.data.long %>% ggplot(aes(Score)) + 
@@ -172,9 +176,22 @@ data.histogram
 #the exception of the Sig.Scale for 18-35 age group. One question I have for these
 #graphs is how to choose the appropriate number of bins.
 
-#levene test, or other variance test?
 
-#pair row 1 and 11, etc. and build histogram on differences
+#<e>Pair rows 1-10 to 11-20. and build histograms of differences-------- 
+#And use Shapiro-Wilks test to test normality---------
+#the difficulty was in pairing 1 to 11, 2 to 12, etc. and I could not see a way to do this simple
+#with pivot_wider or dcast (because the Record numbers do not match up). Therefore,
+#I chose to build a new data frame using cbind nested inside data.frame; (1) I attached
+#the data set to my workspace, then (2)pulled each cell from its place in the original
+#data.frame. (3) I ran a summary to see the new names of the wide data frame (X1-X6)
+# then (4) overwrote the new data frame by piping it into the rename function to give
+#the columns appropriate names, (5) piped into mutate_at to assign my numeric columns
+#as numeric (they were not), and (6) piped into mutate to create my difference
+#columns. This "brute force" method may not have been the most efficient, but it
+#certainly worked.
+
+#Note that going forward, I had to put the column names between two tick `` marks.
+#This, I suspect, is because the names have spaces in them.
 
 attach(BSI.sig.data)
 BSI.sig.data.wide <- data.frame(cbind(Record[1:10], Record[11:20], BSI.Total[1:10], 
@@ -188,6 +205,30 @@ BSI.sig.data.wide <- BSI.sig.data.wide %>% rename("ID 18-35" = X1, "ID 65-80" = 
             mutate(BSI.diff = `BSI 18-35`- `BSI 65-80`,
              SIG.diff = `Sig Scale 18-35` - `Sig Scale 65-80`)
 
+#To create histograms of the differences fo the two test types, I (1) created
+#a new object to store the graph, (2) piped the wide data frame into select, (3)
+#selected only the new difference columns, (4) melted those columns by test type
+#and score (I left out the id.vars argument because I did not keep any for the graph)
+#and (5) piped that into ggplot with only Score assigned to the aesthetics, (6)
+#add a histogram layer, added a manual color scheme by test type, (7) and faceted
+#by test type, using the fee_x argument, and (8) finally giving each facet n.breaks
+#in the x-axis using the scale_x_continuous function (I don't know why one facet 
+#only got 5)
+
+diff.plot <- BSI.sig.data.wide %>% select(BSI.diff, SIG.diff) %>% 
+  melt(variable.name = "Test.Type", value.name = "Score") %>% ggplot(aes(Score)) +
+  geom_histogram(aes(color = Test.Type, fill = Test.Type), 
+                 position = "identity", bins = 6, alpha = .7) + 
+  scale_fill_manual(values = c("lightblue", "lightgreen")) +
+  facet_wrap(~Test.Type, scales = "free_x") +
+  scale_x_continuous(n.breaks = 6) +
+  labs(title = "Difference in Scores Between Paired Age Groups")
+
+diff.plot
+
+#The data looks relatively normal, as the Shapiro-Wilks test will bear out, but
+#I still wonder the best way to assign number of bins.
+
 #Run shapiro-Wilks test to test for normailty---------
 #NULL hypothesis for BSI.diff: data is distributed normally; ALT. hypothesis:
 #data is not distributed normally.
@@ -196,38 +237,75 @@ shapiro.test(BSI.sig.data.wide$SIG.diff)
 
 #For both test, we "fail to reject the null", that is to say, we conclude that 
 #the data is likely normal with p-values > alpha=.05. I suspected this going in
-#because the data sets we combined by subtraction were normally distributed.
+#because the data sets we combined by subtraction were also normally distributed.
+#<e> COMPLETED.
 
-#NULL hypothesis: underlying population variances of the two groups are equal; 
-#ALT. hypothesis: underlying populaion variances are different.
-leveneTest(BSI.sig.data.wide$`BSI 18-35`,BSI.sig.data.wide$`ID 65-80`)
-leveneTest(BSI.sig.data.wide$`BSI 18-35`,BSI.sig.data.wide$`BSI 65-80`, center = mean)
+#<f>Test for significant differences between age groups of each test-----
+  #Test all assumptions necessary to run each test.
+  #(1)Normality: I already tested this back in <b> for all groups and tests
+  #using the stat.decs function; all groups tested as normal by the Shapiro-Wilks test
+  #(2)Test variances for equality:
+#F-test to compare variances between age groups-------
+  #NULL hypotheses: underlying population variances of the two groups are equal; 
+  #ALT. hypotheses: underlying populaion variances are different.
+attach(BSI.sig.data.wide)
 
-leveneTest(BSI.sig.data.wide$`Sig Scale 18-35`, BSI.sig.data.wide$`Sig Scale 65-80`)
-leveneTest(BSI.sig.data.wide$`Sig Scale 18-35`, BSI.sig.data.wide$`Sig Scale 65-80`, center = mean)
+var.test(`BSI 18-35`,`BSI 65-80`)
 
-#for both tests, the p-value falls in the rejection region, therefore we reject 
-#the null and conclude that for both Sig.Scale and BSI.Total, the variances between
-#age groups are different. I ran the test for each test type between groups twice,
-#once using the default median as the center for "robustness" and again with the 
-#center as the mean because the data was tested to be normal. The results were the 
-#same, suggesting that the mean and median are very close together.
+#I ran an f-test to compare variances because we assume that the samples are
+#independent, and because we saw that the data is normally distributed; therefore
+#an f-test is appropriate to compare variances between age groups.
+  #The p-value is greater than alpha=.05, therfore we fail to reject the null
+  #and conclude that the variances between age groups for BSI total are equal.
+
+var.test(`Sig Scale 18-35`, `Sig Scale 65-80`)
+
+  #The p-value is greater than alpha=.05, therfore we fail to reject the null
+  #and conclude that the variances between age groups for Sig Scale are equal.
+  #I will note that this result is not well demostrated by my jitter overlay in the 
+  #Sig Scale bar graph.
 
 #Run t-tests to compare by age group each test type---------
   #Because each test groups tests as normal, they are presumed to be independent,
-  #and that the variances are different, we'll run each test with paired set to
-  #false and var.equal also set to false
+  #and that the variances are equal, we'll run each test with paired set to
+  #false and var.equal set to true.
+#NULL hypothesis: True mean is equal between age groups
+#ALT. hypothesis: True means are not equal.
 
-t.test()
+t.test(`BSI 18-35`,`BSI 65-80`, paired = FALSE, var.equal = TRUE)
+t.test(`Sig Scale 18-35`, `Sig Scale 65-80`, paired = FALSE, var.equal = TRUE)
 
+detach(BSI.sig.data.wide)
+#For both tests, the p-value is significantly less than alpha= .05, therefore
+#we fail to reject either null and conclude that the the true means between
+#age groups are different, and that the confidence interval tell how much larger
+#the means of the 18-35 group are compared to the 65-80 group. <f> COMPLETED.
 
-diff.plot <- BSI.sig.data.wide %>% select(BSI.diff, SIG.diff) %>% 
-  melt(variable.name = "Test.Type", value.name = "Score") %>% ggplot(aes(Score)) +
-    geom_histogram(aes(color = Test.Type, fill = Test.Type), 
-          position = "identity", bins = 6, alpha = .7) + 
-      scale_fill_manual(values = c("lightblue", "lightgreen")) +
-      facet_wrap(~Test.Type, scales = "free_x") +
-      scale_x_continuous(n.breaks = 6) +
-  labs(title = "Difference in Scores Between Paired Age Groups")
+#<g>Retest by age group with the new assumption that the data is paired--------
+# i.e.each person was followed over a long period of time and we tested them at 
+#different timepoints: ONLY FOR THE BSI data!!
+  #NULL hypothesis: The difference of the means from the two timepoints is zero
+  #ALT. hypothesis: The difference of the means from the two timepoints is not zero
+  #(1)Normality: because I ran a Shapiro-Wilks test above on the normality
+  #of the differences, and it was shown to be normally distributed, I conclude
+  #that the differences data is normal for the paired samples.
+  #(2)Variance: I will test the variance at the two timepoints.
+    #Using Levene's test, we calculate the difference in variance of the BSI Total
+    #score by age. Because the data is normally distibuted, I set the center to mean.
+leveneTest(BSI.Total~Age.Group, data = BSI.sig.data, center = mean)
+  #fail to reject the null; we assume variances are equal.
 
-diff.plot
+#We accept the NULL, i.e. the variances for the different timepoints
+#for each test are equal. Therefore, I will run a t-test with paired set to true
+#and var.equal set to true.
+
+#Create a data frame with only ID numbers 1-10---------
+
+paired.data.wide <- BSI.sig.data.wide %>% select(-`ID 65-80`) %>% rename(ID = `ID 18-35`)
+
+attach(paired.data.wide)
+
+t.test(`BSI 18-35`, `BSI 65-80`, paired = TRUE, var.equal = TRUE)
+
+#We fail to reject the null, and conclude that the mean difference is not equal to
+#zero. <g> COMPLETED.
