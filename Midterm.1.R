@@ -1,4 +1,8 @@
 #MIDTERM 1--------
+  #Notes on logistics: Each task assigned in the midterm document (a thru g)
+  #is denoted by <a>, <b>, <c>, etc. and once that task is completed, I denote that
+  # with "<a> COMPLETED", for example. I alo used the "-------" pancake method
+  #to create an outline for my code.
 
 #The given data set is psychiatric symptoms, secondary to an acute spinal injury
 #and associated to age. The columns are: Record ID- the unique identifier, Age 
@@ -10,7 +14,7 @@
 #State the Null and Alternative Hypotheses------
   #NULL hypothesis- there is no difference in number of symptoms and degree of
   #symptoms between age-groups.
-  #Alternative hypothesis- there is significant difference in number and symptoms
+  #Alternative hypothesis- there is significant difference in number of symptoms
   #and degree of symptoms between age groups.
 
 #set working directory and create Git repository------
@@ -57,24 +61,23 @@ BSI.sig.data <- BSI.sig.data %>% mutate_at("Age.Group", factor)
 #and the age group to a factor. <a> COMPLETED.
 
 #<b>Calculate the mean, variance and standard deviation for each age group-------
-  #Using the by function, I can stratify each variable by age group. I also used
-  #the round function to make the data a little more readable, and included the 
-  #NORM argument to get a sense of the shape of the distribution.
+  #By nesting the stat.desc function inside both the round and by functions, I can 
+  #get a rounded, stratified statistical summary of the data. I also included the
+  #norm argument tset to true to return a normality test.
+
 by(data = BSI.sig.data$BSI.Total, BSI.sig.data$Age.Group,
    FUN = function(x) round(stat.desc(x, norm = TRUE), 3))
 
   #The first thing to notice is the extreme difference in mean! The BSI mean
   #is much higher for the 18-35 group. Next, we can notice that, for both groups,
-  #the coeifficient of variation is relatively small, suggesting that most of 
-  #the values cluster fairly close to the mean. The next thing I notice is that
+  #the coeifficient of variation is relatively small, suggesting that the values cluster fairly close to the mean. The next thing I notice is that
   #both groups are likely normally distributed, because both groups show a 
   #normtest.p value greater than alpha=.05, therefore in both cases (where the
   #NULL is that the data is normally distributed) we fail to reject the NULL. 
   #Complimenting this, is the normtest.W values for both groups being relatively
   #close to 1. I conclude that this data is likely normally distributed.
-  #We can also, notice that the requisite standard errors--along with the 
-  #difference in means-- simply will not provide any "overlap" in the CIs of the
-  #distributions.
+  #The sample means along with their confidence intervals do not overlap,
+  #suggest a difference in the population means of the age groups.
 
 by(data = BSI.sig.data$Sig.Scale, BSI.sig.data$Age.Group,
    FUN = function(x) round(stat.desc(x, norm = TRUE), 3))
@@ -83,11 +86,12 @@ by(data = BSI.sig.data$Sig.Scale, BSI.sig.data$Age.Group,
   #subscales that have a significant t-score (sig.scale). The mean in 18-35 is 
   #much higher than in 65-80. The coeifficient of variation is higher in 65-80
   #suggesting that the data points are more spread out in this group. Both groups show a high
-  #probability for normality and shape. And, the confidence intervals do not
-  #overlap.
+  #probability for normality and symmetry. And, the confidence intervals do not
+  #overlap (but are VERY close), suggesting again that there is a difference in the
+  #underlying population means.
 
 #Therefore, for both dependent variables, I suspect that there is a significant
-  #difference between groups.  <b> COMPLETED.
+  #difference in means between groups.  <b> COMPLETED.
 
 #<c>Create bar charts displaying difference in means for BSI Total-------
   #(1)assign an object, (2) pipe the data into ggplot, (3)assign aesthetics,
@@ -119,12 +123,19 @@ BSI.plot
   #which reflects similarity of coefficients of variation. <c> COMPLETED
 
 #<d>Create bar charts displaying difference in means for Sig Scale-------
+  #Almost all methods for building this graph were the same as the previous, with
+  #the exception of setting the limits within the scale_y_continuous function from
+  #-1.2. If I did not set the limits to less than -1, the minimum jitter-point value
+  #-1 would be removed from the graph and I would receive an error (and of course,
+  #the point would not appear on the graph). My guess is that I need to set the limit
+  #to the min value less by the height of the jitter value in order for the point to
+  #consistently show.
 
 Sig.Scale.plot <- BSI.sig.data %>% 
   ggplot(aes(x = Age.Group, y = Sig.Scale, fill = Age.Group)) +
   stat_summary(fun = mean, geom = "bar", width = .7) +
   geom_errorbar(stat = "summary", fun.data = "mean_cl_normal", width = 0.2, color = "tomato")+
-  scale_y_continuous(limits = c(-1.1, 9), breaks = seq(from = -1, to = 9, by = .5))+
+  scale_y_continuous(limits = c(-1.2, 9), breaks = seq(from = -1, to = 9, by = .5))+
   scale_fill_manual(values = c("skyblue", "green")) +
   geom_jitter(aes(color = Age.Group), width = .3, height = .2, stat = "identity") +
   labs(title = "SIG Scores by Age Group", x = "Age Group" , y = "Mean Score by Age") + 
@@ -134,10 +145,11 @@ Sig.Scale.plot
 
 #From this plot, again, we can easily see the very large difference in means. It is
   #not quite as clear that the confidence intervals do not overlap (they don't), but
-  #at worst, someone might conclude that they come very close (whcih they do). Again,
+  #at worst, someone might conclude that they come very close (which they do). Again,
   #it is fairly clear from the graph that the underlying means of the two groups
   #differ significantly. Also, from the geom_jitter overlay, we can see that the 
-  #variation in the 65-80 group is much larger.
+  #variation in the 65-80 group is much larger, which is also reflected in the  
+  #respective coefficients of variation.
   #<d> COMPLETED.
 
 #Melt data into long(tidy) format---------
@@ -158,9 +170,9 @@ BSI.sig.data.long <- melt(BSI.sig.data, id.vars = c("Record", "Age.Group"),
   #For a histogram in ggplot, we only assign an x component into aes. This is
   #a good reason to use long data; I can assign all my scores to the x-component
   #and facet them into the appropriate groups with facet_wrap. Thus, I use faceting
-  #to create hiastograms by test type and age group. I use the scales = "free_x"
+  #to create histograms by test type and age group. I use the scales = "free_x"
   #argument in facet_wrap because the two test types have a different scoring system.
-  #This tells r to assign x valuees appropriate to the specific data. I did't use
+  #This tells r to assign x valuees appropriate to the specific data. I didn't use
   #the "free" argument because I want to keep my counts along the y-axis consistent.
 
 data.histogram <- BSI.sig.data.long %>% ggplot(aes(Score)) + 
@@ -314,3 +326,44 @@ t.test(`BSI 18-35`, `BSI 65-80`, paired = TRUE, var.equal = TRUE)
 #zero. <g> COMPLETED. write a more complete summary.
 
 detach(paired.data.wide)
+
+#Conclusions--------
+  #(1)Treated as independent samples, that is, samples taken as a snapshot of a moment
+  #in time, the means of the two age groups of the Brief Symptom Inventory (BSI)
+  #total score show a statistically significant difference in mean scores, with
+  #the 18-35 group showing a higher score on average. The variances, on average,
+  #tested as equal, both tested as normally distributed, with similar coefficients
+  #of variation. We would conclude that, on average, older patients who suffer an
+  #acute spinal injury, suffer few psychiatric symptoms on the BSI scale.
+
+  #We also can conclude that there is a statistically significant difference of the
+  #means between the two age groups on the Significance Score, with the 18-35 group
+  #showing a higher score on average. The variances, on average, tested as equal, 
+  #both tested as normally distributed, but the coefficients of variation differed,
+  #showing a higher deviation from the mean in the older group. We would conclude
+  #that, on average, the older patients show a lesser number of "clinically significant"
+  #t-scores on the symptom subscales.
+
+  #A final note for the independent samples is that there is a great deal of parity
+  #between the statistical description and conclusions of the BSI total data and
+  #the Sig Scores data leading me to believe there is a correlation between a person's
+  #score on the BSI and the Sig Scale.
+
+point.graph <- BSI.sig.data %>% ggplot(aes(x = BSI.Total, y = Sig.Scale)) +
+    geom_point(aes(group = Age.Group, color = Age.Group)) + 
+    geom_smooth(method = "lm") + scale_x_continuous(n.breaks = 14) +
+    scale_y_continuous(n.breaks = 10) +labs(title = "Linear Trend Between Tests")
+
+point.graph
+
+cor(BSI.sig.data$BSI.Total, BSI.sig.data$Sig.Scale)
+
+  #Both the graph and the pearson correlation test suggest a strong positive
+  #linear relationship between socres of the two tests.
+
+  #(2)Treated as a paired sample, i.e. individuals tested at different timepoints,
+  #the data shows a statistically significant difference in means for the average BSI total
+  #score at different ages. For a paired sample, this suggests that, over time,
+  #a person's score on the BSI scale decreases, or that the number of psychiatric
+  #symptoms a person suffers decreases as the time since the acute spinal injury 
+  #is greater.
